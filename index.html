@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每月人力工時管理 V1.2版</title>
+    <title>每月人力工時管理 V2.0版</title>
     <!-- 載入 React 18 與 Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -31,7 +31,7 @@
             RefreshCw: <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16m0 0v5m0-5h-5" />,
             Settings: (
               <Fragment>
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V4a2 2 0 0 0-2-2z"/>
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
                 <circle cx="12" cy="12" r="3"/>
               </Fragment>
             ),
@@ -147,7 +147,17 @@
               </Fragment>
             ),
             Activity: <path d="M22 12h-4l-3 9L9 3l-3 9H2" />,
-            Calendar: <Fragment><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Fragment>
+            Calendar: <Fragment><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Fragment>,
+            Users: (
+              <Fragment>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </Fragment>
+            ),
+            Search: (
+              <Fragment>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </Fragment>
+            )
           };
 
           return (
@@ -179,7 +189,7 @@
           const [lastUpdated, setLastUpdated] = useState(null);
           const [statusMap, setStatusMap] = useState({});
           
-          const [filters, setFilters] = useState({ project: 'all', month: 'all' });
+          const [filters, setFilters] = useState({ project: 'all', month: 'all', user: 'all' });
           const [selectedIndices, setSelectedIndices] = useState(new Set());
 
           const [pastedText, setPastedText] = useState("");
@@ -192,15 +202,15 @@
           // 共用成本分頁狀態
           const [sharedForm, setSharedForm] = useState({
             groupName: "【客服組】",
-            totalHours: "59.85",
+            totalHours: "0",
             projectsText: "【客服組】明星3缺1\n【客服組】滿貫大亨\n【客服組】金好運TW\n【客服組】金猴爺",
             month: new Date().toISOString().slice(0, 7) // 預設當月
           });
           const [sharedResults, setSharedResults] = useState([]);
 
           const cleanNumber = (val) => {
-            if (!val) return 0;
-            const cleaned = String(val).replace(/[^0-9.-]/g, '');
+            if (val === undefined || val === null) return 0;
+            const cleaned = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, '');
             const num = parseFloat(cleaned);
             return isNaN(num) ? 0 : num;
           };
@@ -232,21 +242,43 @@
             return { headers: rows[0] || [], content: rows.slice(1) };
           };
 
+          const scanForSharedHours = (dataRows, currentHeaders, groupName, targetMonth) => {
+            const findCol = (keywords) => currentHeaders.findIndex(h => keywords.some(k => h.includes(k)));
+            const pIdx = findCol(['專案', 'Project']);
+            const hIdx = findCol(['小時', '工時', 'Hours', '時數']);
+            const mIdx = findCol(['月份', 'Month', '日期', 'Date']);
+            
+            if (pIdx === -1 || hIdx === -1 || mIdx === -1) return "0";
+            const targetName = (groupName || "") + "共用成本";
+            let totalSum = 0;
+            dataRows.forEach(row => {
+                const rowName = (row[pIdx] || "").trim();
+                const rowMonth = normalizeMonth(row[mIdx]);
+                if (rowName === targetName && rowMonth === targetMonth) {
+                    totalSum += cleanNumber(row[hIdx]);
+                }
+            });
+            return totalSum > 0 ? totalSum.toFixed(3) : "0";
+          };
+
           const fetchSheetData = async () => {
             setIsLoading(true);
             try {
               const response = await fetch(csvUrl);
               if (!response.ok) throw new Error('無法讀取資料');
               const text = await response.text();
-              const { headers, content } = parseCSV(text);
-              setHeaders(headers);
-              setRawData(content);
+              const { headers: newHeaders, content: newContent } = parseCSV(text);
+              setHeaders(newHeaders);
+              setRawData(newContent);
               setLastUpdated(new Date().toLocaleString('zh-TW'));
               
               const newStatusMap = {};
-              content.forEach((_, index) => { newStatusMap[index] = '已上傳'; });
+              newContent.forEach((_, index) => { newStatusMap[index] = '已上傳'; });
               setStatusMap(newStatusMap);
               setSelectedIndices(new Set());
+
+              const autoHours = scanForSharedHours(newContent, newHeaders, sharedForm.groupName, sharedForm.month);
+              setSharedForm(prev => ({ ...prev, totalHours: autoHours }));
             } catch (error) {
               console.error(error);
             } finally {
@@ -254,7 +286,10 @@
             }
           };
 
-          useEffect(() => { fetchSheetData(); }, []);
+          const handleManualRescan = () => {
+             const autoHours = scanForSharedHours(rawData, headers, sharedForm.groupName, sharedForm.month);
+             setSharedForm(prev => ({ ...prev, totalHours: autoHours }));
+          };
 
           const handleClearAllData = () => {
             setRawData([]); setStatusMap({}); setSelectedIndices(new Set()); setLastUpdated(null);
@@ -283,9 +318,10 @@
                 csvString += escapedRow.join(",") + `,${status}\n`;
               });
             } else {
-              csvString += "專案名稱,月份,原成本工時,共用分攤工時,總計總工時,資料筆數\n";
+              csvString += "專案名稱,月份,原成本工時,共用分攤工時,總計總工時,佔比,資料筆數\n";
               dataToExport.forEach(item => {
-                csvString += `"${item.name}","${item.month}",${item.originalHours.toFixed(3)},${item.sharedHours.toFixed(3)},${item.totalHours.toFixed(3)},${item.count}\n`;
+                const ratio = (item.totalHours / grandTotals.total * 100).toFixed(2);
+                csvString += `"${item.name}","${item.month}",${item.originalHours.toFixed(3)},${item.sharedHours.toFixed(3)},${item.totalHours.toFixed(3)},"${ratio}%",${item.count}\n`;
               });
             }
             const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
@@ -350,19 +386,16 @@
             setTimeout(() => { setActiveTab('pending'); }, 1000);
           };
 
-          // 計算共用成本
           const handleCalcSharedCost = () => {
             const projects = sharedForm.projectsText.split('\n').map(p => p.trim()).filter(p => p !== "");
             const totalH = cleanNumber(sharedForm.totalHours);
             if (projects.length === 0 || totalH === 0) return;
-
             const avgH = totalH / projects.length;
             const results = projects.map(p => ({
               project: p,
               month: sharedForm.month,
               hours: avgH.toFixed(3)
             }));
-            
             setSharedResults(results);
           };
 
@@ -389,55 +422,61 @@
           const filterOptions = useMemo(() => {
             const projects = new Set();
             const months = new Set();
+            const users = new Set();
             rawData.forEach(row => {
               if (colIndices.project !== -1 && row[colIndices.project]) projects.add(row[colIndices.project].trim());
+              if (colIndices.user !== -1 && row[colIndices.user]) users.add(row[colIndices.user].trim());
               let rawMonthVal = (colIndices.month !== -1 && row[colIndices.month]) ? row[colIndices.month] : (colIndices.date !== -1 ? row[colIndices.date] : '');
               if (rawMonthVal) months.add(normalizeMonth(rawMonthVal));
             });
-            return { projects: Array.from(projects).sort(), months: Array.from(months).sort() };
+            return { projects: Array.from(projects).sort(), months: Array.from(months).sort(), users: Array.from(users).sort() };
           }, [rawData, colIndices]);
 
           const filteredData = useMemo(() => {
             return rawData.map((row, idx) => ({ row, originalIdx: idx })).filter(({ row }) => {
               const pName = colIndices.project !== -1 ? (row[colIndices.project] || '').trim() : '';
               const pMonth = normalizeMonth((colIndices.month !== -1 && row[colIndices.month]) ? row[colIndices.month] : (colIndices.date !== -1 ? row[colIndices.date] : ''));
-              return (filters.project === 'all' || pName === filters.project) && (filters.month === 'all' || pMonth === filters.month);
+              return (filters.project === 'all' || pName === filters.project) && 
+                     (filters.month === 'all' || pMonth === filters.month);
             });
           }, [rawData, filters, colIndices]);
 
-          const pendingData = useMemo(() => filteredData.filter(({ originalIdx }) => statusMap[originalIdx] === '已上傳'), [filteredData, statusMap]);
+          const pendingData = useMemo(() => {
+            return rawData.map((row, idx) => ({ row, originalIdx: idx })).filter(({ row, originalIdx }) => {
+                const pUser = colIndices.user !== -1 ? (row[colIndices.user] || '').trim() : '';
+                return statusMap[originalIdx] === '已上傳' && (filters.user === 'all' || pUser === filters.user);
+            });
+          }, [rawData, statusMap, filters.user, colIndices.user]);
 
+          // 統計邏輯
           const projectStats = useMemo(() => {
             if (colIndices.project === -1) return [];
             const stats = {};
-            filteredData.forEach(({ row }) => {
-              const pName = (row[colIndices.project] || '未分類').trim();
-              
-              // 自動排除包含「共用成本」的項目以防止重複計算
-              if (pName.includes('共用成本')) return;
-
+            rawData.forEach((row) => {
+              const pNameRaw = (row[colIndices.project] || '未分類').trim();
+              if (pNameRaw.includes('共用成本')) return;
               const pMonth = normalizeMonth((colIndices.month !== -1 && row[colIndices.month]) ? row[colIndices.month] : (colIndices.date !== -1 ? row[colIndices.date] : '')) || '未知月份';
+              if (filters.month !== 'all' && pMonth !== filters.month) return;
+              if (filters.project !== 'all' && pNameRaw !== filters.project) return;
               const hours = cleanNumber(colIndices.hours !== -1 ? row[colIndices.hours] : '0');
               const userVal = colIndices.user !== -1 ? (row[colIndices.user] || '') : '';
-              
-              const key = `${pName}_${pMonth}`;
+              const isShared = userVal.includes('共用分攤');
+              if (!isShared && filters.user !== 'all' && userVal !== filters.user) return;
+              const key = `${pNameRaw}_${pMonth}`;
               if (!stats[key]) {
-                stats[key] = { name: pName, month: pMonth, originalHours: 0, sharedHours: 0, totalHours: 0, count: 0 };
+                stats[key] = { name: pNameRaw, month: pMonth, originalHours: 0, sharedHours: 0, totalHours: 0, count: 0 };
               }
-              
-              if (userVal.includes('共用分攤')) {
+              if (isShared) {
                 stats[key].sharedHours = (Math.round((stats[key].sharedHours + hours) * 1000) / 1000);
               } else {
                 stats[key].originalHours = (Math.round((stats[key].originalHours + hours) * 1000) / 1000);
               }
-              
               stats[key].totalHours = (Math.round((stats[key].originalHours + stats[key].sharedHours) * 1000) / 1000);
               stats[key].count += 1;
             });
             return Object.values(stats).sort((a, b) => a.month !== b.month ? b.month.localeCompare(a.month) : a.name.localeCompare(b.name));
-          }, [filteredData, colIndices]);
+          }, [rawData, filters, colIndices]);
 
-          // 計算目前篩選範圍內的總計
           const grandTotals = useMemo(() => {
             const res = projectStats.reduce((acc, curr) => {
               acc.original += curr.originalHours;
@@ -446,8 +485,6 @@
               acc.count += curr.count;
               return acc;
             }, { original: 0, shared: 0, total: 0, count: 0 });
-
-            // 確保精度
             return {
               original: Math.round(res.original * 1000) / 1000,
               shared: Math.round(res.shared * 1000) / 1000,
@@ -482,18 +519,18 @@
           };
 
           return (
-            <div className="min-h-screen pb-20 relative font-medium">
+            <div className="min-h-screen pb-20 relative font-medium text-slate-800">
               {showClearConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
                   <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
                     <div className="p-8 text-center space-y-4">
-                      <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
-                        <Icon name="AlertTriangle" size={32} className="text-red-500" />
+                      <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500">
+                        <Icon name="AlertTriangle" size={32} />
                       </div>
-                      <h3 className="text-xl font-bold">確認清空資料？</h3>
-                      <p className="text-sm text-slate-500">這將會移除目前所有的暫存數據與匯入紀錄，此操作無法復原。</p>
+                      <h3 className="text-xl font-black">確認清空資料？</h3>
+                      <p className="text-sm text-slate-500 font-bold">這將會移除目前所有的暫存數據與匯入紀錄，此操作無法復原。</p>
                     </div>
-                    <div className="grid grid-cols-2 border-t font-bold">
+                    <div className="grid grid-cols-2 border-t font-black">
                       <button onClick={() => setShowClearConfirm(false)} className="py-4 text-slate-400 border-r hover:bg-slate-50 transition-colors">取消</button>
                       <button onClick={handleClearAllData} className="py-4 text-red-500 hover:bg-red-50 transition-colors">確認清空</button>
                     </div>
@@ -507,7 +544,7 @@
                     <div className="bg-slate-900 p-2 rounded-lg shadow-lg">
                       <Icon name="Table" size={20} className="text-white" />
                     </div>
-                    <h1 className="text-lg font-bold hidden sm:block tracking-tight">每月人力工時管理 V1.2版</h1>
+                    <h1 className="text-lg font-black hidden sm:block tracking-tight italic text-slate-700">每月人力工時管理 V2.0版</h1>
                   </div>
                   <nav className="flex space-x-1 bg-slate-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
                     {[
@@ -530,68 +567,74 @@
 
               <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
                 {(activeTab !== 'settings' && activeTab !== 'pasteCalc' && activeTab !== 'shared') && (
-                  <div className="bg-white p-6 rounded-2xl border flex flex-wrap items-end gap-4 shadow-xl max-w-4xl mx-auto">
+                  <div className="bg-white p-6 rounded-2xl border flex flex-wrap items-end gap-4 shadow-xl max-w-5xl mx-auto font-black text-slate-700">
+                    <div className="flex-1 min-w-[160px] space-y-2">
+                      <label className="text-xs text-slate-400 uppercase tracking-widest flex items-center"><Icon name="Users" size={12} className="mr-1" /> 用戶篩選</label>
+                      <select value={filters.user} onChange={(e) => setFilters(prev => ({...prev, user: e.target.value}))} className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all">
+                        <option value="all">所有用戶 (全選)</option>
+                        {filterOptions.users.map(u => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    </div>
                     <div className="flex-1 min-w-[180px] space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center"><Icon name="Filter" size={12} className="mr-1" /> 專案篩選</label>
-                      <select value={filters.project} onChange={(e) => setFilters(prev => ({...prev, project: e.target.value}))} className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 font-bold">
+                      <label className="text-xs text-slate-400 uppercase tracking-widest flex items-center"><Icon name="Filter" size={12} className="mr-1" /> 專案篩選</label>
+                      <select value={filters.project} onChange={(e) => setFilters(prev => ({...prev, project: e.target.value}))} className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all">
                         <option value="all">所有專案</option>
                         {filterOptions.projects.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
                     </div>
                     <div className="flex-1 min-w-[180px] space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center"><Icon name="Filter" size={12} className="mr-1" /> 月份篩選</label>
-                      <select value={filters.month} onChange={(e) => setFilters(prev => ({...prev, month: e.target.value}))} className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 font-bold">
+                      <label className="text-xs text-slate-400 uppercase tracking-widest flex items-center"><Icon name="Filter" size={12} className="mr-1" /> 月份篩選</label>
+                      <select value={filters.month} onChange={(e) => setFilters(prev => ({...prev, month: e.target.value}))} className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all">
                         <option value="all">所有月份</option>
                         {filterOptions.months.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
-                    <button onClick={fetchSheetData} disabled={isLoading} className="bg-slate-800 hover:bg-black text-white h-[44px] px-6 rounded-xl font-bold transition-all flex items-center space-x-2 shadow-lg text-sm uppercase tracking-wider"><Icon name="RefreshCw" size={14} className={isLoading ? 'animate-spin' : ''} /> <span>同步雲端</span></button>
+                    <button onClick={fetchSheetData} disabled={isLoading} className="bg-slate-800 hover:bg-black text-white h-[44px] px-6 rounded-xl font-bold transition-all flex items-center space-x-2 shadow-lg text-sm uppercase tracking-wider active:scale-95"><Icon name="RefreshCw" size={14} className={isLoading ? 'animate-spin' : ''} /> <span>同步雲端</span></button>
                   </div>
                 )}
 
                 {activeTab === 'dashboard' ? (
-                  <section className="space-y-6 animate-in fade-in duration-300 max-w-5xl mx-auto">
+                  <section className="space-y-6 animate-in fade-in duration-300 max-w-[95%] mx-auto">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 text-slate-800">
                         <Icon name="PieChart" size={20} />
-                        <h2 className="text-xl font-bold">專案工時統計分析表</h2>
-                        {filters.month !== 'all' && <span className="ml-2 px-3 py-1 bg-slate-900 text-white text-[10px] rounded-full uppercase tracking-tighter font-black">{filters.month} 數據</span>}
+                        <h2 className="text-xl font-black tracking-tight">專案工時統計分析表</h2>
                       </div>
-                      <button onClick={() => handleExportCSV(projectStats, '工時統計報表')} disabled={projectStats.length === 0} className="flex items-center space-x-1.5 px-5 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all text-xs font-bold uppercase tracking-widest"><Icon name="FileDown" size={14} /><span>匯出報表</span></button>
+                      <button onClick={() => handleExportCSV(projectStats, '工時統計報表')} disabled={projectStats.length === 0} className="flex items-center space-x-1.5 px-5 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all text-xs font-bold uppercase tracking-widest active:scale-95"><Icon name="FileDown" size={14} /><span>匯出報表</span></button>
                     </div>
 
-                    {/* 總統計概覽卡片：動態標題對應篩選 */}
                     <div className="space-y-3">
-                        <div className="flex items-center space-x-2 text-xs font-black text-slate-400 uppercase tracking-widest pl-2">
+                        <div className="flex items-center space-x-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-2">
                             <Icon name="Calendar" size={14} />
                             <span>{filters.month === 'all' ? '全時段累計總覽' : `${filters.month} 月份統計概覽`}</span>
+                            {filters.user !== 'all' && <span className="text-indigo-600 ml-1 border-l-2 border-indigo-100 pl-2">篩選用戶：{filters.user}</span>}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-white p-6 rounded-3xl border shadow-md flex items-center space-x-4 border-l-4 border-l-blue-500">
-                                <div className="bg-blue-50 p-3 rounded-2xl"><Icon name="Activity" size={24} className="text-blue-600" /></div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-black text-slate-700">
+                            <div className="bg-white p-6 rounded-3xl border shadow-md flex items-center space-x-4 border-l-4 border-l-blue-500 transition-transform hover:scale-[1.02]">
+                                <div className="bg-blue-50 p-3 rounded-2xl text-blue-600"><Icon name="Activity" size={24} /></div>
                                 <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">總原成本工時</p>
-                                <p className="text-2xl font-black text-blue-600 leading-tight">
+                                <p className="text-[10px] text-slate-400 uppercase tracking-widest">總原成本工時</p>
+                                <p className="text-2xl text-blue-600 leading-tight">
                                     {grandTotals.original.toLocaleString(undefined, { minimumFractionDigits: 3 })}
                                     <span className="text-xs ml-1 opacity-50 font-normal italic">H</span>
                                 </p>
                                 </div>
                             </div>
-                            <div className="bg-white p-6 rounded-3xl border shadow-md flex items-center space-x-4 border-l-4 border-l-indigo-500">
-                                <div className="bg-indigo-50 p-3 rounded-2xl"><Icon name="Share2" size={24} className="text-indigo-600" /></div>
+                            <div className="bg-white p-6 rounded-3xl border shadow-md flex items-center space-x-4 border-l-4 border-l-indigo-500 transition-transform hover:scale-[1.02]">
+                                <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-600"><Icon name="Share2" size={24} /></div>
                                 <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">總分攤工時</p>
-                                <p className="text-2xl font-black text-indigo-600 leading-tight">
+                                <p className="text-[10px] text-slate-400 uppercase tracking-widest">總分攤工時</p>
+                                <p className="text-2xl text-indigo-600 leading-tight">
                                     {grandTotals.shared.toLocaleString(undefined, { minimumFractionDigits: 3 })}
                                     <span className="text-xs ml-1 opacity-50 font-normal italic">H</span>
                                 </p>
                                 </div>
                             </div>
-                            <div className="bg-slate-900 p-6 rounded-3xl shadow-xl flex items-center space-x-4">
-                                <div className="bg-white/10 p-3 rounded-2xl"><Icon name="Clock" size={24} className="text-white" /></div>
+                            <div className="bg-slate-900 p-6 rounded-3xl shadow-xl flex items-center space-x-4 transition-transform hover:scale-[1.02]">
+                                <div className="bg-white/10 p-3 rounded-2xl text-white"><Icon name="Clock" size={24} /></div>
                                 <div>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">最終累計總工時</p>
-                                <p className="text-2xl font-black text-white leading-tight">
+                                <p className="text-[10px] text-white/50 uppercase tracking-widest">最終累計總工時</p>
+                                <p className="text-2xl text-white leading-tight">
                                     {grandTotals.total.toLocaleString(undefined, { minimumFractionDigits: 3 })}
                                     <span className="text-xs ml-1 opacity-50 font-normal">H</span>
                                 </p>
@@ -600,72 +643,111 @@
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-3xl border shadow-2xl overflow-hidden">
+                    <div className="bg-white rounded-3xl border shadow-2xl overflow-hidden font-black">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-separate border-spacing-0">
                           <thead className="bg-slate-50/80">
                             <tr>
-                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest border-b">專案名稱</th>
-                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest border-b text-center">月份</th>
-                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right border-b bg-blue-50/30">原成本工時</th>
-                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right border-b bg-indigo-50/30">共用分攤工時</th>
-                              <th className="px-6 py-4 text-xs font-bold text-slate-900 uppercase tracking-widest text-right border-b bg-slate-100/50">總計總工時</th>
-                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right border-b">筆數</th>
+                              <th className="px-6 py-4 text-xs text-slate-400 uppercase tracking-widest border-b">專案名稱</th>
+                              <th className="px-6 py-4 text-xs text-slate-400 uppercase tracking-widest border-b text-center">月份</th>
+                              <th className="px-6 py-4 text-xs text-slate-400 uppercase tracking-widest text-right border-b bg-blue-50/30">原成本工時</th>
+                              <th className="px-6 py-4 text-xs text-slate-400 uppercase tracking-widest text-right border-b bg-indigo-50/30">共用分攤工時</th>
+                              <th className="px-6 py-4 text-xs text-slate-900 uppercase tracking-widest text-right border-b bg-slate-100/50">總計總工時</th>
+                              <th className="px-6 py-4 text-xs text-slate-900 uppercase tracking-widest text-right border-b bg-amber-50/50">佔比 (%)</th>
+                              <th className="px-6 py-4 text-xs text-slate-400 uppercase tracking-widest text-right border-b">筆數</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y font-bold">
+                          <tbody className="divide-y font-bold text-sm">
                             {projectStats.length > 0 ? (
                               <Fragment>
-                                {projectStats.map((stat, i) => (
-                                  <tr key={i} className="hover:bg-slate-50/80 transition-colors group">
-                                    <td className="px-6 py-5"><span className="text-slate-800">{stat.name}</span></td>
-                                    <td className="px-6 py-5 text-slate-500 text-sm text-center font-mono">{stat.month}</td>
-                                    <td className="px-6 py-5 text-right text-blue-600 font-bold bg-blue-50/10">
-                                      {stat.originalHours.toLocaleString(undefined, { minimumFractionDigits: 3 })}
-                                      <span className="text-[10px] text-blue-300 ml-1">H</span>
-                                    </td>
-                                    <td className="px-6 py-5 text-right text-indigo-600 font-bold bg-indigo-50/10">
-                                      {stat.sharedHours.toLocaleString(undefined, { minimumFractionDigits: 3 })}
-                                      <span className="text-[10px] text-indigo-300 ml-1">H</span>
-                                    </td>
-                                    <td className="px-6 py-5 text-right text-slate-900 text-lg font-black bg-slate-50/50">
-                                      {stat.totalHours.toLocaleString(undefined, { minimumFractionDigits: 3 })}
-                                      <span className="text-[10px] text-slate-400 ml-1">H</span>
-                                    </td>
-                                    <td className="px-6 py-5 text-right text-slate-400 text-xs">{stat.count}</td>
-                                  </tr>
-                                ))}
+                                {projectStats.map((stat, i) => {
+                                  const ratio = grandTotals.total > 0 ? (stat.totalHours / grandTotals.total * 100) : 0;
+                                  return (
+                                    <tr key={i} className="hover:bg-slate-50/80 transition-colors group">
+                                      <td className="px-6 py-5 font-black min-w-[200px]">
+                                          <span className="text-slate-300 mr-2 text-[10px] font-mono italic">{i + 1}.</span>
+                                          <span className="text-slate-800">{stat.name}</span>
+                                      </td>
+                                      <td className="px-6 py-5 text-slate-500 text-center font-mono">{stat.month}</td>
+                                      <td className="px-6 py-5 text-right text-blue-600 bg-blue-50/10 font-black">
+                                        {stat.originalHours.toLocaleString(undefined, { minimumFractionDigits: 3 })}
+                                        <span className="text-[10px] text-blue-300 ml-1 font-normal">H</span>
+                                      </td>
+                                      <td className="px-6 py-5 text-right text-indigo-600 bg-indigo-50/10 font-black">
+                                        {stat.sharedHours.toLocaleString(undefined, { minimumFractionDigits: 3 })}
+                                        <span className="text-[10px] text-indigo-300 ml-1 font-normal">H</span>
+                                      </td>
+                                      <td className="px-6 py-5 text-right text-slate-900 text-lg font-black bg-slate-50/50">
+                                        {stat.totalHours.toLocaleString(undefined, { minimumFractionDigits: 3 })}
+                                        <span className="text-[10px] text-slate-400 ml-1 font-normal">H</span>
+                                      </td>
+                                      <td className="px-6 py-5 text-right bg-amber-50/20">
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-amber-600 text-sm font-black">{ratio.toFixed(2)}%</span>
+                                            <div className="w-20 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                                                <div className="h-full bg-amber-400" style={{ width: `${ratio}%` }}></div>
+                                            </div>
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-5 text-right text-slate-400 text-xs">{stat.count}</td>
+                                    </tr>
+                                  );
+                                })}
                                 <tr className="bg-slate-800 text-white font-black shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
-                                  <td colSpan="2" className="px-6 py-5 text-right">
+                                  <td colSpan="2" className="px-6 py-6 text-right">
                                     <div className="flex flex-col items-end">
-                                        <span className="text-[10px] opacity-60 uppercase tracking-widest">Selected Summary</span>
-                                        <span className="text-xs">{filters.month === 'all' ? '所有資料全選總計' : `${filters.month} 月份範圍總計`}</span>
+                                        <span className="text-[10px] opacity-60 uppercase tracking-widest mb-1 italic">Summary Total</span>
+                                        <span className="text-xs">{filters.month === 'all' ? '篩選範圍全選總計' : `${filters.month} 範圍總計`}</span>
                                     </div>
                                   </td>
-                                  <td className="px-6 py-5 text-right text-blue-400 border-l border-white/10">
+                                  <td className="px-6 py-6 text-right text-blue-400 border-l border-white/10">
                                     {grandTotals.original.toLocaleString(undefined, { minimumFractionDigits: 3 })}H
                                   </td>
-                                  <td className="px-6 py-5 text-right text-indigo-400 border-l border-white/10">
+                                  <td className="px-6 py-6 text-right text-indigo-400 border-l border-white/10">
                                     {grandTotals.shared.toLocaleString(undefined, { minimumFractionDigits: 3 })}H
                                   </td>
-                                  <td className="px-6 py-5 text-right text-emerald-400 text-xl border-l border-white/20 bg-black/20">
+                                  <td className="px-6 py-6 text-right text-emerald-400 text-xl border-l border-white/20 bg-black/20 font-black">
                                     {grandTotals.total.toLocaleString(undefined, { minimumFractionDigits: 3 })}H
                                   </td>
-                                  <td className="px-6 py-5 text-right text-white/40 text-xs border-l border-white/10">{grandTotals.count} 筆</td>
+                                  <td className="px-6 py-6 text-right text-amber-400 bg-black/10 border-l border-white/10">
+                                    100.00%
+                                  </td>
+                                  <td className="px-6 py-6 text-right text-white/40 text-xs border-l border-white/10">{grandTotals.count} 筆</td>
                                 </tr>
                               </Fragment>
-                            ) : <tr><td colSpan="6" className="py-24 text-center text-slate-300 font-bold italic">目前尚無數據報表</td></tr>}
+                            ) : (
+                              <tr>
+                                <td colSpan="7" className="py-24 text-center text-slate-300 font-bold">
+                                  <div className="flex flex-col items-center space-y-3 font-black text-slate-300 italic">
+                                    <Icon name="Inbox" size={48} className="opacity-20" />
+                                    <p>目前尚無數據，請點擊「同步雲端」或手動匯入</p>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
                           </tbody>
                         </table>
                       </div>
                     </div>
                   </section>
                 ) : activeTab === 'shared' ? (
-                  <section className="space-y-6 animate-in fade-in duration-300 max-w-4xl mx-auto">
-                    <div className="flex items-center space-x-2 text-slate-800"><Icon name="Share2" size={20} /><h2 className="text-xl font-bold">共用成本均分計算器</h2></div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <section className="space-y-6 animate-in fade-in duration-300 max-w-4xl mx-auto font-black text-slate-700">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-slate-800"><Icon name="Share2" size={20} /><h2 className="text-xl">共用成本均分計算器</h2></div>
+                        <button onClick={handleManualRescan} className="flex items-center space-x-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs hover:bg-slate-200 transition-all active:scale-95 shadow-sm border border-slate-200">
+                           <Icon name="Search" size={14} />
+                           <span>從已同步資料重新抓取</span>
+                        </button>
+                    </div>
+                    <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex items-center space-x-3 shadow-inner">
+                      <Icon name="Info" size={18} className="text-indigo-600" />
+                      <p className="text-xs text-indigo-700 leading-relaxed">
+                        【智慧抓取功能】：同步雲端時，系統會自動在 CSV 中尋找名稱符合「<b>{sharedForm.groupName}共用成本</b>」且月份為「<b>{sharedForm.month}</b>」的項目進行加總。
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 font-black">
                       <div className="bg-white rounded-3xl border p-8 space-y-6 shadow-xl">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 font-black">
                           <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">分攤組別名稱</label>
                             <input 
@@ -673,7 +755,7 @@
                               value={sharedForm.groupName} 
                               onChange={(e) => setSharedForm({...sharedForm, groupName: e.target.value})}
                               placeholder="例：【客服組】"
-                              className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm font-bold outline-none" 
+                              className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm font-black outline-none transition-all focus:ring-2 focus:ring-indigo-500/20" 
                             />
                           </div>
                           <div className="space-y-2">
@@ -682,109 +764,116 @@
                               type="month" 
                               value={sharedForm.month} 
                               onChange={(e) => setSharedForm({...sharedForm, month: e.target.value})}
-                              className="w-full bg-slate-50 border rounded-xl px-4 py-2 text-sm font-bold outline-none" 
+                              className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-sm font-black outline-none transition-all focus:ring-2 focus:ring-indigo-500/20" 
                             />
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">共用總時數 (H)</label>
+                        <div className="space-y-2 relative font-black">
+                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex justify-between items-center">
+                            <span>共用總時數 (H)</span>
+                            {cleanNumber(sharedForm.totalHours) > 0 && (
+                                <span className="flex items-center text-[9px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 animate-pulse">
+                                    <Icon name="Check" size={10} className="mr-1"/> 自動帶入成功
+                                </span>
+                            )}
+                          </label>
                           <input 
                             type="number" 
+                            step="0.001"
                             value={sharedForm.totalHours} 
                             onChange={(e) => setSharedForm({...sharedForm, totalHours: e.target.value})}
-                            className="w-full bg-slate-50 border rounded-xl px-4 py-2.5 text-lg font-bold outline-none text-indigo-600" 
+                            className="w-full bg-slate-50 border rounded-xl px-4 py-3 text-lg font-black outline-none text-indigo-600 transition-all focus:ring-2 focus:ring-indigo-500/20" 
                           />
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 font-black">
                           <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">目標專案清單 (一行一個專案)</label>
                           <textarea 
                             value={sharedForm.projectsText} 
                             onChange={(e) => setSharedForm({...sharedForm, projectsText: e.target.value})}
-                            className="w-full h-40 bg-slate-50 border rounded-xl p-4 text-sm font-bold outline-none resize-none" 
+                            className="w-full h-40 bg-slate-50 border rounded-xl p-4 text-sm font-black outline-none resize-none transition-all focus:ring-2 focus:ring-indigo-500/20" 
                             placeholder="貼入專案名稱..."
                           />
                         </div>
-                        <button onClick={handleCalcSharedCost} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-xl hover:bg-indigo-700 transition-all">計算分攤結果</button>
+                        <button onClick={handleCalcSharedCost} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black shadow-xl hover:bg-indigo-700 transition-all active:scale-[0.98]">計算分攤結果</button>
                       </div>
-
-                      <div className="bg-white rounded-3xl border shadow-xl flex flex-col overflow-hidden">
+                      <div className="bg-white rounded-3xl border shadow-xl flex flex-col overflow-hidden font-black">
                         <div className="px-6 py-4 border-b bg-slate-50 flex justify-between items-center">
-                          <h3 className="text-sm font-bold">分攤預覽</h3>
+                          <h3 className="text-sm">分攤預覽</h3>
                           {sharedResults.length > 0 && (
-                            <button onClick={handleImportSharedCost} className="bg-slate-900 text-white text-[10px] px-4 py-2 rounded-lg font-bold shadow-lg">匯入待處理區</button>
+                            <button onClick={handleImportSharedCost} className="bg-slate-900 text-white text-[10px] px-4 py-2 rounded-lg shadow-lg active:scale-95">匯入待處理區</button>
                           )}
                         </div>
-                        <div className="flex-1 overflow-y-auto max-h-[500px]">
+                        <div className="flex-1 overflow-y-auto max-h-[500px] font-black">
                           {sharedResults.length > 0 ? (
                             <table className="w-full text-left">
-                              <thead className="bg-white sticky top-0 shadow-sm border-b text-[10px] text-slate-400 font-bold uppercase">
+                              <thead className="bg-white sticky top-0 shadow-sm border-b text-[10px] text-slate-400 uppercase">
                                 <tr>
-                                  <th className="px-6 py-3">目標專案</th>
-                                  <th className="px-6 py-3 text-right">分攤工時</th>
+                                  <th className="px-6 py-3 tracking-widest font-black">目標專案</th>
+                                  <th className="px-6 py-3 text-right tracking-widest font-black">分攤工時</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y font-bold">
+                              <tbody className="divide-y text-sm font-black">
                                 {sharedResults.map((item, idx) => (
-                                  <tr key={idx} className="hover:bg-slate-50">
-                                    <td className="px-6 py-4 text-xs text-slate-700">{item.project}</td>
-                                    <td className="px-6 py-4 text-right text-indigo-600 font-bold">{item.hours} H</td>
+                                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-6 py-4 text-slate-700">{item.project}</td>
+                                    <td className="px-6 py-4 text-right text-indigo-600 font-black">{item.hours} H</td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                           ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-300 p-10 text-center">
-                              <Icon name="Share2" size={48} className="mb-4 opacity-20" />
-                              <p className="text-xs font-bold">請輸入左側資訊並點擊計算</p>
+                            <div className="h-full flex flex-col items-center justify-center text-slate-300 p-10 text-center font-black">
+                              <Icon name="Share2" size={48} className="mb-4 opacity-10" />
+                              <p className="text-xs">請確認左側資訊，並點擊計算</p>
                             </div>
                           )}
                         </div>
                         {sharedResults.length > 0 && (
-                          <div className="p-4 bg-indigo-50 border-t flex justify-between items-center">
-                            <span className="text-xs font-bold text-indigo-700">總計專案數: {sharedResults.length}</span>
-                            <span className="text-xs font-bold text-indigo-700">平均每專案: {sharedResults[0].hours} H</span>
+                          <div className="p-4 bg-indigo-50 border-t flex justify-between items-center font-black">
+                            <span className="text-xs text-indigo-700">總計專案數: {sharedResults.length}</span>
+                            <span className="text-xs text-indigo-700 tracking-tighter italic">單筆均分: {sharedResults[0].hours} H</span>
                           </div>
                         )}
                       </div>
                     </div>
                   </section>
                 ) : activeTab === 'pending' || activeTab === 'source' ? (
-                  <section className="space-y-4 animate-in fade-in duration-300 max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2 text-slate-900"><Icon name={activeTab === 'pending' ? "Inbox" : "Database"} size={20} /><h2 className="text-xl font-bold tracking-tight">{activeTab === 'pending' ? '待處理專區 (未歸檔)' : '數據明細總庫'}</h2></div>
-                      <button onClick={() => handleExportCSV(activeTab === 'pending' ? pendingData : filteredData, '工時明細')} className="flex items-center space-x-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-black tracking-widest"><Icon name="FileDown" size={14} /><span>匯出 CSV</span></button>
+                  <section className="space-y-4 animate-in fade-in duration-300 max-w-5xl mx-auto font-black text-slate-700">
+                    <div className="flex items-center justify-between font-black">
+                      <div className="flex items-center space-x-2 text-slate-900"><Icon name={activeTab === 'pending' ? "Inbox" : "Database"} size={20} /><h2 className="text-xl font-black">{activeTab === 'pending' ? '待處理專區 (尚未歸檔)' : '數據明細總庫'}</h2></div>
+                      <button onClick={() => handleExportCSV(activeTab === 'pending' ? pendingData : filteredData, '工時明細')} className="flex items-center space-x-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-black active:scale-95 transition-all"><Icon name="FileDown" size={14} /><span>匯出 CSV</span></button>
                     </div>
                     <div className="bg-white rounded-2xl shadow-xl border overflow-hidden relative">
                       {selectedIndices.size > 0 && (
                         <div className="absolute top-0 left-0 right-0 z-20 bg-slate-900 px-6 py-3.5 flex items-center justify-between shadow-lg animate-in slide-in-from-top">
-                          <span className="text-white text-sm font-bold flex items-center"><Icon name="CheckSquare" size={16} className="mr-2 text-emerald-400" /> 已選取 {selectedIndices.size} 筆</span>
+                          <span className="text-white text-sm font-black flex items-center"><Icon name="CheckSquare" size={16} className="mr-2 text-emerald-400" /> 已選取 {selectedIndices.size} 筆</span>
                           <div className="flex items-center space-x-2">
                             {['已上傳', '計算中', '已結案'].map(s => (
-                              <button key={s} onClick={() => batchUpdateStatus(s)} className="bg-white/10 hover:bg-white/20 text-white text-[10px] px-3 py-1.5 rounded-lg font-bold transition-colors">{s}</button>
+                              <button key={s} onClick={() => batchUpdateStatus(s)} className="bg-white/10 hover:bg-white/20 text-white text-[10px] px-3 py-1.5 rounded-lg font-black transition-colors">{s}</button>
                             ))}
-                            <button onClick={() => setSelectedIndices(new Set())} className="ml-4 text-white/60 hover:text-white transition-colors"><Icon name="Trash2" size={16} /></button>
+                            <button onClick={() => setSelectedIndices(new Set())} className="ml-4 text-white/60 hover:text-white transition-colors active:scale-90"><Icon name="Trash2" size={16} /></button>
                           </div>
                         </div>
                       )}
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left">
+                      <div className="overflow-x-auto text-sm">
+                        <table className="w-full text-left font-black">
                           <thead className="bg-slate-50 border-b">
                             <tr>
-                              <th className="px-4 py-4 w-12 text-center sticky left-0 bg-slate-50 z-10">
-                                <button onClick={() => toggleSelectAll(activeTab === 'pending' ? pendingData : filteredData)} className="text-slate-400 hover:text-slate-900 transition-colors">
+                              <th className="px-4 py-4 w-12 text-center sticky left-0 bg-slate-50 z-10 font-black">
+                                <button onClick={() => toggleSelectAll(activeTab === 'pending' ? pendingData : filteredData)} className="text-slate-400 hover:text-slate-900 transition-colors font-black font-black">
                                   {selectedIndices.size > 0 && selectedIndices.size === (activeTab === 'pending' ? pendingData.length : filteredData.length) ? <Icon name="CheckSquare" size={18} className="text-slate-900" /> : <Icon name="Square" size={18} />}
                                 </button>
                               </th>
-                              <th className="px-6 py-4 text-xs font-bold text-slate-500 border-r">狀態標記</th>
-                              {sourceVisibleCols.map(idx => <th key={idx} className="px-6 py-4 text-xs font-bold text-slate-500">{headers[idx]}</th>)}
+                              <th className="px-6 py-4 text-xs text-slate-500 border-r uppercase tracking-widest font-black">狀態標記</th>
+                              {sourceVisibleCols.map(idx => <th key={idx} className="px-6 py-4 text-xs text-slate-500 uppercase tracking-widest font-black">{headers[idx]}</th>)}
                             </tr>
                           </thead>
-                          <tbody className="divide-y font-bold text-sm">
-                            {(activeTab === 'pending' ? pendingData : filteredData).map(({ row, originalIdx }) => {
-                              const isSharedSource = (row[colIndices.project] || '').includes('共用成本');
-                              
+                          <tbody className="divide-y font-bold font-black text-slate-700">
+                            { (activeTab === 'pending' ? pendingData : filteredData).length > 0 ? (activeTab === 'pending' ? pendingData : filteredData).map(({ row, originalIdx }) => {
+                              const pName = (row[colIndices.project] || '');
+                              const isSharedSource = pName.includes('共用成本');
                               return (
-                                <tr key={originalIdx} className={`hover:bg-slate-50 transition-colors ${selectedIndices.has(originalIdx) ? 'bg-indigo-50/30' : ''} ${isSharedSource ? 'opacity-50 grayscale bg-slate-50/50' : ''}`}>
+                                <tr key={originalIdx} className={`hover:bg-slate-50 transition-colors font-black ${selectedIndices.has(originalIdx) ? 'bg-indigo-50/30' : ''} ${isSharedSource ? 'opacity-50 grayscale bg-slate-50/50' : ''}`}>
                                   <td className="px-4 py-4 text-center sticky left-0 bg-white group-hover:bg-slate-50 transition-colors">
                                     <button onClick={() => toggleSelectRow(originalIdx)} className={`${selectedIndices.has(originalIdx) ? 'text-indigo-600' : 'text-slate-300'}`}>
                                       {selectedIndices.has(originalIdx) ? <Icon name="CheckSquare" size={18} /> : <Icon name="Square" size={18} />}
@@ -792,69 +881,75 @@
                                   </td>
                                   <td className="px-6 py-4 border-r whitespace-nowrap">
                                     <div className="flex flex-col space-y-1">
-                                      <select value={statusMap[originalIdx] || '已上傳'} onChange={(e) => setStatusMap(prev => ({...prev, [originalIdx]: e.target.value}))} className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border outline-none transition-all ${getStatusStyle(statusMap[originalIdx])}`}>
+                                      <select value={statusMap[originalIdx] || '已上傳'} onChange={(e) => setStatusMap(prev => ({...prev, [originalIdx]: e.target.value}))} className={`text-[10px] font-black px-3 py-1.5 rounded-lg border outline-none transition-all ${getStatusStyle(statusMap[originalIdx])}`}>
                                         <option value="已上傳">已上傳</option>
                                         <option value="計算中">計算中</option>
                                         <option value="已結案">已結案</option>
                                       </select>
-                                      {isSharedSource && <span className="text-[9px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 font-black">⚠️ 統計排除項</span>}
+                                      {isSharedSource && <span className="text-[9px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 font-black tracking-tighter">⚠️ 統計排除項</span>}
                                     </div>
                                   </td>
-                                  {sourceVisibleCols.map(cIdx => <td key={cIdx} className="px-6 py-4 text-slate-700 whitespace-nowrap font-mono">{ (cIdx === colIndices.month || cIdx === colIndices.date) ? normalizeMonth(row[cIdx]) : row[cIdx] }</td>)}
+                                  {sourceVisibleCols.map(cIdx => <td key={cIdx} className="px-6 py-4 whitespace-nowrap font-mono font-black">{ (cIdx === colIndices.month || cIdx === colIndices.date) ? normalizeMonth(row[cIdx]) : row[cIdx] }</td>)}
                                 </tr>
                               );
-                            })}
+                            }) : (
+                                <tr>
+                                    <td colSpan={sourceVisibleCols.length + 2} className="py-24 text-center text-slate-300 italic font-black">
+                                        目前尚無明細數據，請點擊「同步雲端」
+                                    </td>
+                                </tr>
+                            )}
                           </tbody>
                         </table>
                       </div>
                     </div>
                   </section>
                 ) : activeTab === 'pasteCalc' ? (
-                  <section className="space-y-6 animate-in fade-in duration-300 max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between"><div className="flex items-center space-x-2"><Icon name="ClipboardList" size={20} className="text-slate-800" /><h2 className="text-xl font-bold tracking-tight">快速匯入工具</h2></div><button onClick={() => { setPastedText(""); setPastedResults([]); setParsedRowsToImport([]); setImportSuccess(false); setParseError(""); }} className="text-xs font-bold text-slate-400 hover:text-red-500 flex items-center uppercase tracking-widest"><Icon name="Trash2" size={14} className="mr-1" /> 清除內容</button></div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      <div className="bg-white rounded-3xl border p-6 space-y-4 shadow-xl">
-                        <div className="flex justify-between items-center font-bold text-sm text-slate-700"><span>文字輸入區</span><span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded uppercase font-bold">格式：專案 月份 工時</span></div>
-                        <textarea value={pastedText} onChange={(e) => { setPastedText(e.target.value); setParseError(""); }} placeholder="範例：&#10;專案A  2026-01-15  8.555" className={`w-full h-80 bg-slate-50 border ${parseError ? 'border-red-300' : 'border-slate-100'} rounded-2xl p-4 text-sm font-mono outline-none resize-none font-bold`} />
-                        {parseError && <div className="text-red-500 text-[10px] font-bold flex items-center"><Icon name="AlertCircle" size={12} className="mr-1" /> {parseError}</div>}
-                        <button onClick={handleProcessPastedText} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold shadow-xl transition-all active:scale-[0.98]">立即預覽計算</button>
+                  <section className="space-y-6 animate-in fade-in duration-300 max-w-5xl mx-auto font-black text-slate-700">
+                    <div className="flex items-center justify-between"><div className="flex items-center space-x-2 text-slate-800 font-black"><Icon name="ClipboardList" size={20} /><h2>快速匯入工具</h2></div><button onClick={() => { setPastedText(""); setPastedResults([]); setParsedRowsToImport([]); setImportSuccess(false); setParseError(""); }} className="text-xs text-slate-400 hover:text-red-500 flex items-center tracking-widest transition-colors font-black font-black"><Icon name="Trash2" size={14} className="mr-1" /> 清除內容</button></div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 font-black">
+                      <div className="bg-white rounded-3xl border p-6 space-y-4 shadow-xl font-black text-slate-700 font-black">
+                        <div className="flex justify-between items-center font-black text-sm"><span>文字輸入區</span><span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded uppercase">格式：專案 月份 工時</span></div>
+                        <textarea value={pastedText} onChange={(e) => { setPastedText(e.target.value); setParseError(""); }} placeholder="範例：&#10;專案A  2026-01-15  8.555" className={`w-full h-80 bg-slate-50 border ${parseError ? 'border-red-300' : 'border-slate-100'} rounded-2xl p-4 text-sm outline-none resize-none transition-all focus:ring-2 focus:ring-indigo-500/10 font-black font-black`} />
+                        {parseError && <div className="text-red-500 text-[10px] flex items-center font-black font-black"><Icon name="AlertCircle" size={12} className="mr-1" /> {parseError}</div>}
+                        <button onClick={handleProcessPastedText} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black shadow-xl transition-all active:scale-[0.98] font-black">立即預覽計算</button>
                       </div>
-                      <div className="bg-white rounded-3xl border shadow-xl flex flex-col min-h-[460px] overflow-hidden">
-                        <div className="px-6 py-4 border-b bg-slate-50 flex justify-between items-center"><h3 className="text-sm font-bold">加總預覽</h3>{pastedResults.length > 0 && !importSuccess && <button onClick={() => handleImportToSystem()} className="bg-slate-900 text-white text-[10px] px-4 py-2 rounded-lg font-bold shadow-lg active:scale-95 uppercase tracking-widest"><Icon name="Download" size={14} className="mr-1" /> 匯入待處理區</button>}{importSuccess && <span className="text-emerald-600 text-[10px] font-bold flex items-center uppercase tracking-widest"><Icon name="Check" size={14} className="mr-1" /> 匯入完成</span>}</div>
-                        <div className="flex-1 overflow-y-auto">
+                      <div className="bg-white rounded-3xl border shadow-xl flex flex-col min-h-[460px] overflow-hidden font-black">
+                        <div className="px-6 py-4 border-b bg-slate-50 flex justify-between items-center font-black text-slate-700 font-black"><h3 className="text-sm">加總預覽</h3>{pastedResults.length > 0 && !importSuccess && <button onClick={() => handleImportToSystem()} className="bg-slate-900 text-white text-[10px] px-4 py-2 rounded-lg shadow-lg active:scale-95 transition-all">匯入待處理區</button>}{importSuccess && <span className="text-emerald-600 text-[10px] flex items-center font-black font-black"><Icon name="Check" size={14} className="mr-1" /> 匯入完成</span>}</div>
+                        <div className="flex-1 overflow-y-auto font-black text-slate-700 font-black">
                           {pastedResults.length > 0 ? (
-                            <table className="w-full text-left">
-                              <thead className="bg-white sticky top-0 shadow-sm border-b text-[10px] text-slate-400 font-bold uppercase"><tr><th className="px-6 py-3">專案</th><th className="px-6 py-3 text-center">月份</th><th className="px-6 py-3 text-right">工時</th></tr></thead>
-                              <tbody className="divide-y font-bold">
-                                {pastedResults.map((item, idx) => (<tr key={idx} className="hover:bg-slate-50"><td className="px-6 py-4 text-xs text-slate-700">{item.project}</td><td className="px-6 py-4 text-[10px] text-slate-500 text-center font-mono">{item.month}</td><td className="px-6 py-4 text-right text-slate-900 font-bold">{item.totalHours.toFixed(3)}H</td></tr>))}
+                            <table className="w-full text-left font-black">
+                              <thead className="bg-white sticky top-0 shadow-sm border-b text-[10px] text-slate-400"><tr><th className="px-6 py-3 tracking-widest font-black">專案</th><th className="px-6 py-3 text-center tracking-widest font-black">月份</th><th className="px-6 py-3 text-right tracking-widest font-black">工時</th></tr></thead>
+                              <tbody className="divide-y font-black">
+                                {pastedResults.map((item, idx) => (<tr key={idx} className="hover:bg-slate-50 transition-colors font-black font-black"><td className="px-6 py-4 text-xs">{item.project}</td><td className="px-6 py-4 text-[10px] text-center font-mono font-black">{item.month}</td><td className="px-6 py-4 text-right text-slate-900 font-black font-black font-black">{item.totalHours.toFixed(3)}H</td></tr>))}
                               </tbody>
                             </table>
-                          ) : <div className="h-full flex flex-col items-center justify-center text-slate-300 p-10 text-center opacity-40 font-bold uppercase tracking-widest"><Icon name="Calculator" size={48} className="mb-4" /><p className="text-xs">請貼入數據並預覽</p></div>}
+                          ) : <div className="h-full flex flex-col items-center justify-center text-slate-300 p-10 text-center opacity-30 font-black"><Icon name="Calculator" size={48} className="mb-4" /><p className="text-xs">請貼入數據並預覽</p></div>}
                         </div>
                       </div>
                     </div>
                   </section>
                 ) : (
-                  <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
-                    <div className="bg-white rounded-3xl border shadow-2xl overflow-hidden font-bold">
-                       <div className="p-10 border-b bg-slate-50/30 text-center"><Icon name="Settings" size={40} className="text-slate-900 mx-auto mb-4 opacity-80" /><h2 className="text-2xl font-bold tracking-tight">系統連動與設定</h2></div>
-                       <div className="p-10 space-y-8">
-                         <div className="space-y-3"><label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center"><Icon name="Database" size={12} className="mr-2" /> Google Sheet 公開 CSV 連結</label><input type="text" value={csvUrl} onChange={(e) => setCsvUrl(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-4 py-3.5 text-sm outline-none font-mono" /></div>
-                         <div className="bg-slate-50 p-6 rounded-3xl border text-xs text-slate-600 space-y-4 shadow-inner">
+                  <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 font-black text-slate-700 font-black">
+                    <div className="bg-white rounded-3xl border shadow-2xl overflow-hidden font-black">
+                       <div className="p-10 border-b bg-slate-50/30 text-center font-black font-black"><Icon name="Settings" size={40} className="text-slate-900 mx-auto mb-4 opacity-80" /><h2 className="text-2xl tracking-tight">系統連動與設定</h2></div>
+                       <div className="p-10 space-y-8 font-black">
+                         <div className="space-y-3 font-black font-black"><label className="text-xs text-slate-400 uppercase tracking-[0.2em] flex items-center font-black font-black"><Icon name="Database" size={12} className="mr-2" /> Google Sheet 公開 CSV 連結</label><input type="text" value={csvUrl} onChange={(e) => setCsvUrl(e.target.value)} className="w-full bg-slate-50 border rounded-xl px-4 py-3.5 text-sm outline-none font-mono focus:ring-2 focus:ring-slate-900/10 transition-all font-black font-black" /></div>
+                         <div className="bg-slate-50 p-6 rounded-3xl border text-xs text-slate-600 space-y-4 shadow-inner leading-relaxed font-black font-black font-black">
                            <p className="flex items-center text-slate-900 uppercase tracking-widest font-black border-b pb-2"><Icon name="Info" size={14} className="mr-2" /> 數據計算邏輯提示</p>
-                           <div className="space-y-2 leading-relaxed">
-                            <p>1. 系統自動將「日期」標準化為 <b>YYYY-MM</b> 格式進行彙總。</p>
-                            <p>2. 同步資料後預設狀態為「已上傳」，標記為結案後會自動歸檔。</p>
-                            <p>3. 工時統計精度為 <b>小數點後三位</b>。</p>
-                            <p>4. <b>重複計算預防</b>：系統會自動在統計報表中排除專案名稱含有「共用成本」的原始項目。</p>
+                           <div className="space-y-2 font-black">
+                            <p>1. 系統自動將「日期」格式標準化為 <b>YYYY-MM</b> 月份進行彙總。</p>
+                            <p>2. 同步資料後狀態為「已上傳」，標記為結案後會自動歸檔。</p>
+                            <p>3. <b>佔比分析 V2.0</b>：統計表新增「佔比」欄位，顯示單一專案相對於目前篩選總量的人力佔用比例。</p>
+                            <p>4. <b>加總機制</b>：同步時自動累加 CSV 中符合組別共用名稱的所有紀錄。</p>
                            </div>
                          </div>
-                         <button onClick={() => { fetchSheetData(); setActiveTab('dashboard'); }} className="w-full bg-slate-900 text-white py-4.5 rounded-2xl font-bold shadow-xl active:scale-95 text-lg uppercase tracking-widest transition-all">更新設定並同步數據</button>
+                         <button onClick={() => { fetchSheetData(); setActiveTab('dashboard'); }} className="w-full bg-slate-900 text-white py-4.5 rounded-2xl shadow-xl active:scale-95 text-lg uppercase tracking-widest transition-all font-black font-black font-black">更新設定並同步數據</button>
                        </div>
                     </div>
-                    <div className="bg-white rounded-3xl border border-red-100 shadow-lg overflow-hidden p-6 bg-red-50/20 flex items-center justify-between">
-                      <div className="flex items-center space-x-3 text-red-600 font-bold text-sm tracking-widest uppercase font-black"><Icon name="Trash2" size={20} /><span>重置區域：清空系統快取</span></div>
-                      <button onClick={() => setShowClearConfirm(true)} className="bg-white border border-red-200 text-red-500 px-6 py-2 rounded-xl text-sm font-bold hover:bg-red-50 active:scale-95 shadow-sm uppercase tracking-widest font-black transition-colors">立即清除</button>
+                    <div className="bg-white rounded-3xl border border-red-100 shadow-lg overflow-hidden p-6 bg-red-50/20 flex items-center justify-between font-black text-red-600">
+                      <div className="flex items-center space-x-3 text-sm tracking-widest uppercase font-black"><Icon name="Trash2" size={20} /><span>重置區域：清空系統快取</span></div>
+                      <button onClick={() => setShowClearConfirm(true)} className="bg-white border border-red-200 text-red-500 px-6 py-2 rounded-xl text-sm font-black hover:bg-red-50 active:scale-95 shadow-sm uppercase tracking-widest transition-colors font-black">立即清除</button>
                     </div>
                   </div>
                 )}
